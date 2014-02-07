@@ -16,8 +16,8 @@ import (
 )
 
 const (
-	NCPUS = 2
 	GZIP_EXTENSION = ".gz"
+	NCPUS          = 2
 )
 
 // TODO: Work this out automatically, if possible.
@@ -123,15 +123,15 @@ func main() {
 	runtime.GOMAXPROCS(NCPUS)
 
 	// pathChan is global
-	pathChan = make(chan string, NCPUS * 4)
-	matchChan := make(chan string, NCPUS * 4)
+	pathChan = make(chan string, NCPUS*4)
+	matchChan := make(chan string, NCPUS*4)
 
 	// printMatch prints things that arrive on the matchChan
 	go printMatch(matchChan)
 
 	var wg sync.WaitGroup
 
-	for i := 0; i < NCPUS * 2; i++ {
+	for i := 0; i < NCPUS*2; i++ {
 		// A new WaitGroup for each goroutine
 		wg.Add(1)
 		go func() {
