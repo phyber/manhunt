@@ -127,7 +127,8 @@ func walkFunc(pathChan chan<- string) func(filePath string, fileInfo os.FileInfo
 func main() {
 	flag.Parse()
 	if flag.NArg() == 0 {
-		fmt.Errorf("Please provide a search term.\n")
+		fmt.Println("Please provide a search term.")
+		return
 	}
 	searchTerm := flag.Arg(0)
 
