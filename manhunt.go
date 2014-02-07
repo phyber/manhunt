@@ -21,10 +21,14 @@ const (
 )
 
 // TODO: Work this out automatically, if possible.
+// Paths taken from /etc/{manpath.config,man_db.conf}
 var MANPATH = [...]string{
+	// MANDATORY_MANPATH
 	"/usr/local/share/man",
-	"/usr/local/man",
 	"/usr/share/man",
+	"/usr/man",
+	// Regular manpaths.
+	"/usr/local/man",
 	"/usr/X11R6/man",
 	"/opt/man",
 }
