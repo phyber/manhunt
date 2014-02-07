@@ -16,8 +16,9 @@ import (
 
 const (
 	GZIP_EXTENSION = ".gz"
-	NCPUS          = 2
 )
+
+var NCPUS int = runtime.NumCPU()
 
 // TODO: Work this out automatically, if possible.
 // Paths taken from /etc/{manpath.config,man_db.conf}
