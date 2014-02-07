@@ -59,7 +59,7 @@ func searchManPage(searchTerm string, path string, matchChan chan<- string) erro
 	if filepath.Ext(path) == GZIP_EXTENSION {
 		gz, err := gzip.NewReader(file)
 		if err != nil {
-			// IF there was an error opening the gzip reader, just return nil
+			// If there was an error opening the gzip reader, just return nil
 			// and skip this file.
 			fmt.Errorf("Error opening gzip reader for '%s'", path)
 			return nil
@@ -85,7 +85,8 @@ func searchManPage(searchTerm string, path string, matchChan chan<- string) erro
 
 		// Check for the searchTerm on the line of the file.
 		if strings.Contains(line, searchTerm) {
-			// Matches go to matchChan and are handled by the printMatch goroutine.
+			// Matches go to matchChan and are handled by the printMatch
+			// goroutine.
 			matchChan <- path
 			return nil
 		}
@@ -150,7 +151,8 @@ func main() {
 				// We're discarding errors from searchManPages for now.
 				searchManPage(searchTerm, path, matchChan)
 			}
-			// WaitGroup is finished after goroutine has processed all of pathChan
+			// WaitGroup is finished after goroutine has processed all of
+			// pathChan
 			wg.Done()
 		}()
 	}
