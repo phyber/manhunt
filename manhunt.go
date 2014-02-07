@@ -33,6 +33,10 @@ var MANPATH = [...]string{
 	"/opt/man",
 }
 
+// Keeps track of manpages we've already seen.
+var seenPages = make(map[string]bool)
+
+// Paths for searchManPage to operate on flow through this.
 var pathChan chan string
 
 // Prints items arriving on matchChan
@@ -98,7 +102,7 @@ func searchManPage(searchTerm string, path string, matchChan chan<- string) erro
 }
 
 // This function is passed to filepath.Walk
-func walkFunc(path string, fileInfo os.FileInfo, err error) error {
+func walkFunc(filePath string, fileInfo os.FileInfo, err error) error {
 	// This usually occurs when a path doesn't exist.
 	// Skip it.
 	if err != nil {
@@ -107,8 +111,16 @@ func walkFunc(path string, fileInfo os.FileInfo, err error) error {
 
 	// Put filepaths into pathChan if it's a regular file.
 	if fileInfo.Mode().IsRegular() {
-		// paths are passed to searchManPage via a goroutine in main()
-		pathChan <- path
+		basename := path.Base(filePath)
+
+		// If we haven't seen the manpage, pass it through the pathChan
+		if _, ok := seenPages[basename]; !ok {
+			// paths are passed to searchManPage via a goroutine in main()
+			pathChan <- filePath
+
+			// Flag manpage as seen so we don't bother searching it again.
+			seenPages[basename] = true
+		}
 	}
 	return nil
 }
