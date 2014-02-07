@@ -41,33 +41,52 @@ func printMatch(matchChan <-chan string) {
 	}
 }
 
-// TODO: Don't assume that manpages are all compressed.
-func decompressAndSearch(searchTerm string, path string, matchChan chan<- string) error {
+// Handle opening and searching the file.
+// TODO: Split this into two functions. 1) Opening. 2) Searching.
+func searchManPage(searchTerm string, path string, matchChan chan<- string) error {
 	file, err := os.OpenFile(path, os.O_RDONLY, 0400)
 	if err != nil {
 		return err
 	}
 	defer file.Close()
 
-	// TODO: We should check the filemagic to see if it's a gzip file before
-	// doing this
-	gz, err := gzip.NewReader(file)
-	if err != nil {
-		return nil
+	// Check if the file was a gzip file.
+	var gzipFile bool
+	if filepath.Ext(path) == ".gz" {
+		gzipFile = true
 	}
-	gzRead := bufio.NewReader(gz)
-	defer gz.Close()
 
-	for {
-		line, err := gzRead.ReadString('\n')
+	// reader is set depending on gzippedness of file.
+	var reader *bufio.Reader
+
+	// Use a gzip reader if the file was gzipped.
+	if gzipFile {
+		gz, err := gzip.NewReader(file)
 		if err != nil {
+			return nil
+		}
+		reader = bufio.NewReader(gz)
+		defer gz.Close()
+	} else {
+		reader = bufio.NewReader(file)
+	}
+
+	// Start reading through the file, line by line.
+	for {
+		line, err := reader.ReadString('\n')
+		if err != nil {
+			// Break if we get to the EOF
 			if err == io.EOF {
 				break
 			}
+			// Report the error if it's anything other than EOF.
 			fmt.Errorf("Unknown error while processing %s\n", path)
+			fmt.Errorf("Error: %s", err)
 		}
 
+		// Check for the searchTerm on the line of the file.
 		if strings.Contains(line, searchTerm) {
+			// Matches go to matchChan and are handled by the printMatch goroutine.
 			matchChan <- path
 			return nil
 		}
@@ -86,7 +105,7 @@ func walkFunc(path string, fileInfo os.FileInfo, err error) error {
 
 	// Put filepaths into pathChan if it's a regular file.
 	if fileInfo.Mode().IsRegular() {
-		// paths are passed to decompressAndSearch via a goroutine in main()
+		// paths are passed to searchManPage via a goroutine in main()
 		pathChan <- path
 	}
 	return nil
@@ -95,13 +114,13 @@ func walkFunc(path string, fileInfo os.FileInfo, err error) error {
 func main() {
 	flag.Parse()
 	if flag.NArg() == 0 {
-		fmt.Println("Please provide a search term.")
+		fmt.Errorf("Please provide a search term.\n")
 	}
 	searchTerm := flag.Arg(0)
 
 	runtime.GOMAXPROCS(NCPUS)
 
-	// pathchan is global
+	// pathChan is global
 	pathChan = make(chan string, NCPUS * 4)
 	matchChan := make(chan string, NCPUS * 4)
 
@@ -115,7 +134,7 @@ func main() {
 		wg.Add(1)
 		go func() {
 			for path := range pathChan {
-				_ = decompressAndSearch(searchTerm, path, matchChan)
+				_ = searchManPage(searchTerm, path, matchChan)
 			}
 			// WaitGroup is finished after goroutine has processed all of pathChan
 			wg.Done()
