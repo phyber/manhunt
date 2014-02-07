@@ -150,6 +150,7 @@ func main() {
 		wg.Add(1)
 		go func() {
 			for path := range pathChan {
+				// We're discarding errors from searchManPages for now.
 				_ = searchManPage(searchTerm, path, matchChan)
 			}
 			// WaitGroup is finished after goroutine has processed all of pathChan
