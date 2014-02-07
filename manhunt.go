@@ -141,13 +141,14 @@ func main() {
 
 	var wg sync.WaitGroup
 
+	// Start a few goroutines for searching the manpages.
 	for i := 0; i < NCPUS*2; i++ {
 		// A new WaitGroup for each goroutine
 		wg.Add(1)
 		go func() {
 			for path := range pathChan {
 				// We're discarding errors from searchManPages for now.
-				_ = searchManPage(searchTerm, path, matchChan)
+				searchManPage(searchTerm, path, matchChan)
 			}
 			// WaitGroup is finished after goroutine has processed all of pathChan
 			wg.Done()
