@@ -58,6 +58,9 @@ func searchManPage(searchTerm string, path string, matchChan chan<- string) erro
 	if filepath.Ext(path) == GZIP_EXTENSION {
 		gz, err := gzip.NewReader(file)
 		if err != nil {
+			// IF there was an error opening the gzip reader, just return nil
+			// and skip this file.
+			fmt.Errorf("Error opening gzip reader for '%s'", path)
 			return nil
 		}
 		reader = bufio.NewReader(gz)
