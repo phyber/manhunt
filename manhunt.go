@@ -18,7 +18,7 @@ const (
 	GZIP_EXTENSION = ".gz"
 )
 
-var NCPUS int = runtime.NumCPU()
+var NumCPU int = runtime.NumCPU()
 
 // TODO: Work this out automatically, if possible.
 // Paths taken from /etc/{manpath.config,man_db.conf}
@@ -133,10 +133,10 @@ func main() {
 	}
 	searchTerm := flag.Arg(0)
 
-	runtime.GOMAXPROCS(NCPUS)
+	runtime.GOMAXPROCS(NumCPU)
 
-	pathChan := make(chan string, NCPUS)
-	matchChan := make(chan string, NCPUS)
+	pathChan := make(chan string, NumCPU+1)
+	matchChan := make(chan string, NumCPU+1)
 
 	// printMatch prints things that arrive on the matchChan
 	go printMatch(matchChan)
@@ -144,7 +144,7 @@ func main() {
 	var wg sync.WaitGroup
 
 	// Start a few goroutines for searching the manpages.
-	for i := 0; i < NCPUS*2; i++ {
+	for i := 0; i < NumCPU*2; i++ {
 		// A new WaitGroup for each goroutine
 		wg.Add(1)
 		go func() {
