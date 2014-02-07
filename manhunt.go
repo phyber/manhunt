@@ -135,8 +135,8 @@ func main() {
 
 	runtime.GOMAXPROCS(NCPUS)
 
-	pathChan := make(chan string, NCPUS*4)
-	matchChan := make(chan string, NCPUS*4)
+	pathChan := make(chan string, NCPUS)
+	matchChan := make(chan string, NCPUS)
 
 	// printMatch prints things that arrive on the matchChan
 	go printMatch(matchChan)
