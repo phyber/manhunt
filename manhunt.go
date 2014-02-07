@@ -49,6 +49,8 @@ func decompressAndSearch(searchTerm string, path string, matchChan chan<- string
 	}
 	defer file.Close()
 
+	// TODO: We should check the filemagic to see if it's a gzip file before
+	// doing this
 	gz, err := gzip.NewReader(file)
 	if err != nil {
 		return nil
@@ -62,7 +64,7 @@ func decompressAndSearch(searchTerm string, path string, matchChan chan<- string
 			if err == io.EOF {
 				break
 			}
-			fmt.Printf("Unknown error while processing %s\n", path)
+			fmt.Errorf("Unknown error while processing %s\n", path)
 		}
 
 		if strings.Contains(line, searchTerm) {
@@ -99,6 +101,7 @@ func main() {
 
 	runtime.GOMAXPROCS(NCPUS)
 
+	// pathchan is global
 	pathChan = make(chan string, NCPUS * 4)
 	matchChan := make(chan string, NCPUS * 4)
 
@@ -108,11 +111,13 @@ func main() {
 	var wg sync.WaitGroup
 
 	for i := 0; i < NCPUS * 2; i++ {
+		// A new WaitGroup for each goroutine
 		wg.Add(1)
 		go func() {
 			for path := range pathChan {
 				_ = decompressAndSearch(searchTerm, path, matchChan)
 			}
+			// WaitGroup is finished after goroutine has processed all of pathChan
 			wg.Done()
 		}()
 	}
