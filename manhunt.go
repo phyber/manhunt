@@ -17,6 +17,7 @@ import (
 
 const (
 	NCPUS = 2
+	GZIP_EXTENSION = ".gz"
 )
 
 // TODO: Work this out automatically, if possible.
@@ -50,17 +51,11 @@ func searchManPage(searchTerm string, path string, matchChan chan<- string) erro
 	}
 	defer file.Close()
 
-	// Check if the file was a gzip file.
-	var gzipFile bool
-	if filepath.Ext(path) == ".gz" {
-		gzipFile = true
-	}
-
 	// reader is set depending on gzippedness of file.
 	var reader *bufio.Reader
 
-	// Use a gzip reader if the file was gzipped.
-	if gzipFile {
+	// Check if the file was a gzip file and set reader appropriately.
+	if filepath.Ext(path) == GZIP_EXTENSION {
 		gz, err := gzip.NewReader(file)
 		if err != nil {
 			return nil
