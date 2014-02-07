@@ -1,10 +1,8 @@
-Manhunt
--------
+# Manhunt
 
 Search for a given string of text in your manpages.
 
-Usage
-=====
+## Usage
 
 	$ manhunt printf
 	man (1)
