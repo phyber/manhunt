@@ -1,0 +1,5 @@
+# Ignore built binary.
+manhunt
+
+# vim backups
+*~
