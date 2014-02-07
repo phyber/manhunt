@@ -33,9 +33,6 @@ var MANPATH = [...]string{
 	"/opt/man",
 }
 
-// Paths for searchManPage to operate on flow through this.
-var pathChan chan string
-
 // Prints items arriving on matchChan
 func printMatch(matchChan <-chan string) {
 	for match := range matchChan {
@@ -99,7 +96,7 @@ func searchManPage(searchTerm string, path string, matchChan chan<- string) erro
 }
 
 // Closure around seenPages.
-func walkFunc() func(filePath string, fileInfo os.FileInfo, err error) error {
+func walkFunc(pathChan chan<- string) func(filePath string, fileInfo os.FileInfo, err error) error {
 	var seenPages = make(map[string]bool)
 
 	// This function is passed to filepath.Walk
@@ -136,8 +133,7 @@ func main() {
 
 	runtime.GOMAXPROCS(NCPUS)
 
-	// pathChan is global
-	pathChan = make(chan string, NCPUS*4)
+	pathChan := make(chan string, NCPUS*4)
 	matchChan := make(chan string, NCPUS*4)
 
 	// printMatch prints things that arrive on the matchChan
@@ -158,7 +154,7 @@ func main() {
 		}()
 	}
 
-	nextPath := walkFunc()
+	nextPath := walkFunc(pathChan)
 	for _, path := range MANPATH {
 		err := filepath.Walk(path, nextPath)
 		if err != nil {
