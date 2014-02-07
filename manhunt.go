@@ -155,6 +155,9 @@ func main() {
 		}()
 	}
 
+	// The walkFunc feeds the full paths of the files found within the
+	// MANPATHs to pathChan. pathChan is read in the goroutine above and
+	// the paths are fed to searchManPage()
 	nextPath := walkFunc(pathChan)
 	for _, path := range MANPATH {
 		err := filepath.Walk(path, nextPath)
@@ -162,10 +165,14 @@ func main() {
 			continue
 		}
 	}
+
+	// No more paths to feed to pathChan, close it so the WaitGroups can exit.
 	close(pathChan)
-	close(matchChan)
 
 	// This WaitGroup is finished when the pathChan EOF is encountered in the
 	// above goroutine.
 	wg.Wait()
+
+	// WaitGroups have exited, nothing else to match in matchChan
+	close(matchChan)
 }
