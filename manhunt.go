@@ -163,18 +163,9 @@ func main() {
 		}
 	}
 	close(pathChan)
+	close(matchChan)
 
 	// This WaitGroup is finished when the pathChan EOF is encountered in the
 	// above goroutine.
 	wg.Wait()
-
-	// Probably not required, but I'm not sure.
-	// Wait for matchChan to be exhausted before closing it.
-	for {
-		if len(matchChan) == 0 {
-			close(matchChan)
-			break
-		}
-		time.Sleep(1)
-	}
 }
