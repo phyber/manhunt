@@ -29,9 +29,9 @@ var MANPATH = [...]string{
 }
 
 var pathChan chan string
-var matchChan chan string
 
-func printMatch() {
+// Prints items arriving on matchChan
+func printMatch(matchChan <-chan string) {
 	for match := range matchChan {
 		basename := path.Base(match)
 		manInfo := strings.Split(basename, ".")
@@ -41,7 +41,8 @@ func printMatch() {
 	}
 }
 
-func decompressAndSearch(searchTerm string, path string) error {
+// TODO: Don't assume that manpages are all compressed.
+func decompressAndSearch(searchTerm string, path string, matchChan chan<- string) error {
 	file, err := os.OpenFile(path, os.O_RDONLY, 0400)
 	if err != nil {
 		return err
@@ -73,6 +74,7 @@ func decompressAndSearch(searchTerm string, path string) error {
 	return nil
 }
 
+// This function is passed to filepath.Walk
 func walkFunc(path string, fileInfo os.FileInfo, err error) error {
 	// This usually occurs when a path doesn't exist.
 	// Skip it.
@@ -82,6 +84,7 @@ func walkFunc(path string, fileInfo os.FileInfo, err error) error {
 
 	// Put filepaths into pathChan if it's a regular file.
 	if fileInfo.Mode().IsRegular() {
+		// paths are passed to decompressAndSearch via a goroutine in main()
 		pathChan <- path
 	}
 	return nil
@@ -97,9 +100,10 @@ func main() {
 	runtime.GOMAXPROCS(NCPUS)
 
 	pathChan = make(chan string, NCPUS * 4)
-	matchChan = make(chan string, NCPUS * 4)
+	matchChan := make(chan string, NCPUS * 4)
 
-	go printMatch()
+	// printMatch prints things that arrive on the matchChan
+	go printMatch(matchChan)
 
 	var wg sync.WaitGroup
 
@@ -107,7 +111,7 @@ func main() {
 		wg.Add(1)
 		go func() {
 			for path := range pathChan {
-				_ = decompressAndSearch(searchTerm, path)
+				_ = decompressAndSearch(searchTerm, path, matchChan)
 			}
 			wg.Done()
 		}()
@@ -121,8 +125,12 @@ func main() {
 	}
 	close(pathChan)
 
+	// This WaitGroup is finished when the pathChan EOF is encountered in the
+	// above goroutine.
 	wg.Wait()
+
 	// Probably not required, but I'm not sure.
+	// Wait for matchChan to be exhausted before closing it.
 	for {
 		if len(matchChan) == 0 {
 			close(matchChan)
