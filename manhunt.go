@@ -112,6 +112,11 @@ func walkFunc(pathChan chan<- string) func(filePath string, fileInfo os.FileInfo
 		if fileInfo.Mode().IsRegular() {
 			basename := path.Base(filePath)
 
+			// Sometimes manpages on a system are both compressed and
+			// uncompressed (why?). Remove the .gz suffix in the basename so
+			// that we don't display those twice.
+			basename = strings.TrimSuffix(basename, GZIP_EXTENSION)
+
 			// If we haven't seen the manpage, pass it through the pathChan
 			if _, ok := seenPages[basename]; !ok {
 				// paths are passed to searchManPage via a goroutine in main()
