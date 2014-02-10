@@ -46,8 +46,8 @@ func printMatch(matchChan <-chan string) {
 
 // Handle opening and searching the file.
 // TODO: Split this into two functions. 1) Opening. 2) Searching.
-func searchManPage(searchTerm string, path string, matchChan chan<- string) error {
-	file, err := os.OpenFile(path, os.O_RDONLY, 0400)
+func searchManPage(searchTerm string, manFilePath string, matchChan chan<- string) error {
+	file, err := os.OpenFile(manFilePath, os.O_RDONLY, 0400)
 	if err != nil {
 		return err
 	}
@@ -57,12 +57,12 @@ func searchManPage(searchTerm string, path string, matchChan chan<- string) erro
 	var reader *bufio.Reader
 
 	// Check if the file was a gzip file and set reader appropriately.
-	if filepath.Ext(path) == GZIP_EXTENSION {
+	if filepath.Ext(manFilePath) == GZIP_EXTENSION {
 		gz, err := gzip.NewReader(file)
 		if err != nil {
 			// If there was an error opening the gzip reader, just return nil
 			// and skip this file.
-			fmt.Errorf("Error opening gzip reader for '%s'", path)
+			fmt.Errorf("Error opening gzip reader for '%s'", manFilePath)
 			return nil
 		}
 		reader = bufio.NewReader(gz)
@@ -80,7 +80,7 @@ func searchManPage(searchTerm string, path string, matchChan chan<- string) erro
 				break
 			}
 			// Report the error if it's anything other than EOF.
-			fmt.Errorf("Unknown error while processing %s\n", path)
+			fmt.Errorf("Unknown error while processing %s\n", manFilePath)
 			fmt.Errorf("Error: %s", err)
 		}
 
@@ -88,7 +88,7 @@ func searchManPage(searchTerm string, path string, matchChan chan<- string) erro
 		if strings.Contains(line, searchTerm) {
 			// Matches go to matchChan and are handled by the printMatch
 			// goroutine.
-			matchChan <- path
+			matchChan <- manFilePath
 			return nil
 		}
 	}
@@ -153,9 +153,9 @@ func main() {
 		// A new WaitGroup for each goroutine
 		wg.Add(1)
 		go func() {
-			for path := range pathChan {
+			for manFilePath := range pathChan {
 				// We're discarding errors from searchManPages for now.
-				searchManPage(searchTerm, path, matchChan)
+				searchManPage(searchTerm, manFilePath, matchChan)
 			}
 			// WaitGroup is finished after goroutine has processed all of
 			// pathChan
@@ -167,8 +167,8 @@ func main() {
 	// MANPATHs to pathChan. pathChan is read in the goroutine above and
 	// the paths are fed to searchManPage()
 	nextPath := walkFunc(pathChan)
-	for _, path := range MANPATH {
-		err := filepath.Walk(path, nextPath)
+	for _, manFilePath := range MANPATH {
+		err := filepath.Walk(manFilePath, nextPath)
 		if err != nil {
 			continue
 		}
