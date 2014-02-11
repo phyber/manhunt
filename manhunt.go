@@ -18,7 +18,8 @@ const (
 	GZIP_EXTENSION = ".gz"
 )
 
-var numCPU int = runtime.NumCPU()
+var numCPU = runtime.NumCPU()
+var debug  = flag.Bool("debug", false, "Print extra debug messages.")
 
 // TODO: Work this out automatically, if possible.
 // Paths taken from /etc/{manpath.config,man_db.conf}
@@ -33,6 +34,11 @@ var MANPATH = [...]string{
 	"/opt/man",
 }
 
+func errorLog(message string) {
+	if *debug {
+		fmt.Fprint(os.Stderr, message)
+	}
+}
 // Prints items arriving on matchChan
 func printMatch(matchChan <-chan string) {
 	for match := range matchChan {
@@ -62,7 +68,7 @@ func searchManPage(searchTerm string, manFilePath string, matchChan chan<- strin
 		if err != nil {
 			// If there was an error opening the gzip reader, just return nil
 			// and skip this file.
-			fmt.Errorf("Error opening gzip reader for '%s'", manFilePath)
+			errorLog(fmt.Sprintf("Error opening gzip reader for '%s'\n", manFilePath))
 			return nil
 		}
 		reader = bufio.NewReader(gz)
@@ -80,8 +86,8 @@ func searchManPage(searchTerm string, manFilePath string, matchChan chan<- strin
 				break
 			}
 			// Report the error if it's anything other than EOF.
-			fmt.Errorf("Unknown error while processing %s\n", manFilePath)
-			fmt.Errorf("Error: %s", err)
+			errorLog(fmt.Sprintf("Unknown error while processing %s\n", manFilePath))
+			errorLog(fmt.Sprintf("Error: %s\n", err))
 		}
 
 		// Check for the searchTerm on the line of the file.
@@ -105,8 +111,10 @@ func walkFunc(pathChan chan<- string) func(filePath string, fileInfo os.FileInfo
 		if err != nil {
 			// Skip non-existant paths.
 			if os.IsNotExist(err) {
+				errorLog(fmt.Sprintf("Error: '%s' does not exist.\n", filePath))
 				return nil
 			}
+			errorLog(fmt.Sprintf("Error walking '%s': %s\n", filePath, err))
 			return err
 		}
 
