@@ -18,8 +18,10 @@ const (
 	GZIP_EXTENSION = ".gz"
 )
 
-var numCPU = runtime.NumCPU()
-var debug  = flag.Bool("debug", false, "Print extra debug messages.")
+var (
+	debug  = flag.Bool("debug", false, "Print extra debug messages.")
+	numCPU = runtime.NumCPU()
+)
 
 // TODO: Work this out automatically, if possible.
 // Paths taken from /etc/{manpath.config,man_db.conf}
@@ -39,6 +41,7 @@ func errorLog(message string) {
 		fmt.Fprint(os.Stderr, message)
 	}
 }
+
 // Prints items arriving on matchChan
 func printMatch(matchChan <-chan string) {
 	for match := range matchChan {
