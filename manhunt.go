@@ -21,20 +21,20 @@ const (
 var (
 	debug  = flag.Bool("debug", false, "Print extra debug messages.")
 	numCPU = runtime.NumCPU()
-)
 
-// TODO: Work this out automatically, if possible.
-// Paths taken from /etc/{manpath.config,man_db.conf}
-var MANPATH = [...]string{
-	// MANDATORY_MANPATH
-	"/usr/local/share/man",
-	"/usr/share/man",
-	"/usr/man",
-	// Regular manpaths.
-	"/usr/local/man",
-	"/usr/X11R6/man",
-	"/opt/man",
-}
+	// TODO: Work this out automatically, if possible.
+	// Paths taken from /etc/{manpath.config,man_db.conf}
+	MANPATH = [...]string{
+		// MANDATORY_MANPATH
+		"/usr/local/share/man",
+		"/usr/share/man",
+		"/usr/man",
+		// Regular manpaths.
+		"/usr/local/man",
+		"/usr/X11R6/man",
+		"/opt/man",
+	}
+)
 
 // Prints message to stderr if debugging is enabled.
 func errorLog(message string) {
