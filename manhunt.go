@@ -36,6 +36,7 @@ var MANPATH = [...]string{
 	"/opt/man",
 }
 
+// Prints message to stderr if debugging is enabled.
 func errorLog(message string) {
 	if *debug {
 		fmt.Fprint(os.Stderr, message)
