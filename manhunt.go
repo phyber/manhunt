@@ -75,8 +75,8 @@ func searchManPage(searchTerm string, manFilePath string, matchChan chan<- strin
 			errorLog(fmt.Sprintf("Error opening gzip reader for '%s'\n", manFilePath))
 			return nil
 		}
-		reader = bufio.NewReader(gz)
 		defer gz.Close()
+		reader = bufio.NewReader(gz)
 	} else {
 		reader = bufio.NewReader(file)
 	}
