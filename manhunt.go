@@ -15,7 +15,7 @@ import (
 )
 
 const (
-	GZIP_EXTENSION = ".gz"
+	gzipExtension = ".gz"
 )
 
 var (
@@ -24,8 +24,8 @@ var (
 
 	// TODO: Work this out automatically, if possible.
 	// Paths taken from /etc/{manpath.config,man_db.conf}
-	MANPATH = [...]string{
-		// MANDATORY_MANPATH
+	manPath = [...]string{
+		// MANDATORY_manPath
 		"/usr/local/share/man",
 		"/usr/share/man",
 		"/usr/man",
@@ -67,7 +67,7 @@ func searchManPage(searchTerm string, manFilePath string, matchChan chan<- strin
 	var reader *bufio.Reader
 
 	// Check if the file was a gzip file and set reader appropriately.
-	if filepath.Ext(manFilePath) == GZIP_EXTENSION {
+	if filepath.Ext(manFilePath) == gzipExtension {
 		gz, err := gzip.NewReader(file)
 		if err != nil {
 			// If there was an error opening the gzip reader, just return nil
@@ -129,7 +129,7 @@ func walkFunc(pathChan chan<- string) func(filePath string, fileInfo os.FileInfo
 			// Sometimes manpages on a system are both compressed and
 			// uncompressed (why?). Remove the .gz suffix in the basename so
 			// that we don't display those twice.
-			basename = strings.TrimSuffix(basename, GZIP_EXTENSION)
+			basename = strings.TrimSuffix(basename, gzipExtension)
 
 			// If we haven't seen the manpage, pass it through the pathChan
 			if _, ok := seenPages[basename]; !ok {
@@ -178,10 +178,10 @@ func main() {
 	}
 
 	// The walkFunc feeds the full paths of the files found within the
-	// MANPATHs to pathChan. pathChan is read in the goroutine above and
+	// manPaths to pathChan. pathChan is read in the goroutine above and
 	// the paths are fed to searchManPage()
 	nextPath := walkFunc(pathChan)
-	for _, manFilePath := range MANPATH {
+	for _, manFilePath := range manPath {
 		err := filepath.Walk(manFilePath, nextPath)
 		if err != nil {
 			fmt.Println(err)
