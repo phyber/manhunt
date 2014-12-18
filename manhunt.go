@@ -2,11 +2,13 @@ package main
 
 import (
 	"bufio"
+	"bytes"
 	"compress/gzip"
 	"flag"
 	"fmt"
 	"io"
 	"os"
+	"os/exec"
 	"path"
 	"path/filepath"
 	"runtime"
@@ -21,19 +23,6 @@ const (
 var (
 	debug  = flag.Bool("debug", false, "Print extra debug messages.")
 	numCPU = runtime.NumCPU()
-
-	// TODO: Work this out automatically, if possible.
-	// Paths taken from /etc/{manpath.config,man_db.conf}
-	manPath = [...]string{
-		// MANDATORY_manPath
-		"/usr/local/share/man",
-		"/usr/share/man",
-		"/usr/man",
-		// Regular manpaths.
-		"/usr/local/man",
-		"/usr/X11R6/man",
-		"/opt/man",
-	}
 )
 
 // Prints message to stderr if debugging is enabled.
@@ -52,6 +41,20 @@ func printMatch(matchChan <-chan string) {
 		section := manInfo[1]
 		fmt.Printf("%s (%s)\n", command, section)
 	}
+}
+
+func getManPath() ([]string, error) {
+	cmd := exec.Command("manpath")
+	var out bytes.Buffer
+	cmd.Stdout = &out
+	err := cmd.Run()
+	if err != nil {
+		return []string{}, err
+	}
+
+	manPath := strings.Split(out.String(), ":")
+
+	return manPath, nil
 }
 
 // Handle opening and searching the file.
@@ -181,6 +184,11 @@ func main() {
 	// manPaths to pathChan. pathChan is read in the goroutine above and
 	// the paths are fed to searchManPage()
 	nextPath := walkFunc(pathChan)
+	manPath, err := getManPath()
+	if err != nil {
+		fmt.Errorf("%s", err)
+	}
+
 	for _, manFilePath := range manPath {
 		err := filepath.Walk(manFilePath, nextPath)
 		if err != nil {
